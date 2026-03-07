@@ -16,6 +16,8 @@ enum class EUnitState : uint8
 	Dead
 };
 
+class UWidgetComponent;
+
 UCLASS(Abstract, HideDropdown)
 class BINARYBLITZ_API AUnitBase : public ACharacter
 {
@@ -28,7 +30,7 @@ public:
 
 	AUnitBase();
 
-	void InitStats(const EFaction InFaction, const FUnitStats InDefaultStats);
+	void InitStats(const EFaction InFaction, const UDataTable* Table, const FName& RowName);
 
 	void OnSpawned();
 
@@ -38,9 +40,17 @@ public:
 
 	bool IsAlive() const;
 
+	bool ShouldUpdateTarget() const;
+
+	EUnitState GetState() const { return UnitState; }
+
 	EFaction GetFaction() const { return Faction; }
 
-	float GetAttackRange() const { return DefaultStats.Range; }
+	const FUnitStats& GetDefaultStats() const;
+
+	const FEnemyAIFactors& GetEnemyAIFactors() const;
+
+	float GetHealthPercent() const;
 
 protected:
 	//~ Begin AActor Interface
@@ -49,11 +59,21 @@ protected:
 
 	void UpdateCombat(float DeltaSeconds);
 
+	void UpdateHealthBarRotation();
+
 	bool IsTargetInRange() const;
 
 	void TryAttack();
 
 	void OnDeath();
+
+	void OnPassiveIncome();
+
+	UFUNCTION(BlueprintNativeEvent, meta = (DisplayName = "On Attack BP"))
+	void OnAttack_BP();
+
+	UFUNCTION(BlueprintNativeEvent, meta = (DisplayName = "On Death BP"))
+	void OnDeath_BP();
 
 protected:
 	/** Hit point */
@@ -65,9 +85,9 @@ protected:
 	/** Faction */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Stats, meta = (DisplayName = "Faction"))
 	EFaction Faction;
-	/** Initial stats */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Stats, meta = (DisplayName = "Default Stats"))
-	FUnitStats DefaultStats;
+	/** Data table row handle */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Data, meta = (DisplayName = "Table Row Handle"))
+	FDataTableRowHandle TableRowHandle;
 
 	/** Current unit state */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = State, meta = (DisplayName = "Current State"))
@@ -75,4 +95,17 @@ protected:
 	/** Current attack target */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = State, meta = (DisplayName = "Current Target"))
 	AUnitBase* CurrentTarget = nullptr;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UWidgetComponent* HealthBarComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Stats, meta = (DisplayName = "Income Generation"))
+	float PassiveIncome;
+	static float CoinDropMultiplier;
+
+private:
+	static FUnitStats FallbackStats;
+	static FEnemyAIFactors FallbackAIFactors;
+
+	FTimerHandle PassiveIncomeHandle;
 };

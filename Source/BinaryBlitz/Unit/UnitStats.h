@@ -34,6 +34,20 @@ public:
 	float Cost;
 };
 
+USTRUCT(BlueprintType, meta = (DisplayName = "Enemy AI Factors"))
+struct FEnemyAIFactors
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy AI Factors", meta = (DisplayName = "Offence Score"))
+	float OffenceScore;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy AI Factors", meta = (DisplayName = "Defence Score"))
+	float DefenceScore;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy AI Factors", meta = (DisplayName = "Bias"))
+	float Bias;
+};
+
 USTRUCT(BlueprintType, meta = (DisplayName = "Unit Table Row"))
 struct FUnitTableRow : public FTableRowBase
 {
@@ -55,6 +69,9 @@ public:
 	/** Stats */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "Stats"))
 	FUnitStats Stats;
+	/** Enemy AI factors */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "Enemy AI Factors"))
+	FEnemyAIFactors AIFactors;
 	/** Object pool init number */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "Pool Num"))
 	int InitNum;

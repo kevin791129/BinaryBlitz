@@ -7,6 +7,7 @@
 #include "../Unit/UnitMovementController.h"
 /* Other */
 #include "Kismet/GameplayStatics.h"
+#include "../BinaryBlitzConfig.h"
 #include "../BinaryBlitz.h"
 
 ABinaryBlitzUnitManager* ABinaryBlitzUnitManager::Instance = nullptr;
@@ -49,6 +50,12 @@ void ABinaryBlitzUnitManager::BeginPlay()
 	if (!IsValid(EvilBase))
 	{
 		UE_LOG(LogBinaryBlitz, Error, TEXT("No evil base found."))
+	}
+
+	if (const UBinaryBlitzConfig* Config = GetDefault<UBinaryBlitzConfig>())
+	{
+		UpdateInterval = Config->MovementUpdateInterval;
+		MoveToMultiplier = Config->MoveToMultiplier;
 	}
 }
 
@@ -93,9 +100,19 @@ void ABinaryBlitzUnitManager::UnregisterUnit(AUnitBase* Unit)
 		EvilUnits.Remove(Unit);
 }
 
+const AUnitBase* ABinaryBlitzUnitManager::GetBase(EFaction Faction) const
+{
+	return (Faction == EFaction::Good) ? GoodBase : EvilBase;
+}
+
+const TArray<AUnitBase*>& ABinaryBlitzUnitManager::GetActiveUnits(EFaction Faction) const
+{
+	return (Faction == EFaction::Good) ? GoodUnits : EvilUnits;
+}
+
 AUnitBase* ABinaryBlitzUnitManager::FindClosestEnemy(AUnitBase* Unit)
 {
-	if (!IsValid(Unit))
+	if (!IsValid(Unit) || Unit->GetDefaultStats().ATK <= 0.0f)
 		return nullptr;
 
 	const TArray<AUnitBase*>& Opponents = (Unit->GetFaction() == EFaction::Good) ? EvilUnits : GoodUnits;
@@ -120,35 +137,9 @@ AUnitBase* ABinaryBlitzUnitManager::FindClosestEnemy(AUnitBase* Unit)
 
 	return BestTarget;
 }
-UE_DISABLE_OPTIMIZATION
+
 void ABinaryBlitzUnitManager::UpdateInternal()
 {
-	for (AUnitBase* Unit : GoodUnits)
-	{
-		if (!IsValid(Unit) || !Unit->IsAlive())
-		{
-			continue;
-		}
-
-		AUnitBase* Target = FindClosestEnemy(Unit);
-		Unit->SetTarget(Target);
-
-		if (AUnitMovementController* AI = Cast<AUnitMovementController>(Unit->GetController()))
-		{
-			const float DistSq = FVector::DistSquared(Unit->GetActorLocation(), Target->GetActorLocation());
-
-			if (DistSq <= FMath::Square(Unit->GetAttackRange()))
-			{
-				AI->StopUnitMovement();
-			}
-			else
-			{
-				AI->MoveToEnemy(Target, Unit->GetAttackRange() * MovementThreshold);
-			}
-		}
-	}
-
-
 	auto UpdateSide = [this](AUnitBase* Base, const TArray<AUnitBase*>& Units)
 		{
 			AUnitBase* Target = FindClosestEnemy(Base);
@@ -156,7 +147,7 @@ void ABinaryBlitzUnitManager::UpdateInternal()
 
 			for (AUnitBase* Unit : Units)
 			{
-				if (!IsValid(Unit) || !Unit->IsAlive())
+				if (!IsValid(Unit) || !Unit->ShouldUpdateTarget())
 				{
 					continue;
 				}
@@ -166,23 +157,24 @@ void ABinaryBlitzUnitManager::UpdateInternal()
 
 				if (AUnitMovementController* AI = Cast<AUnitMovementController>(Unit->GetController()))
 				{
-					const float DistSq = FVector::DistSquared(Unit->GetActorLocation(), Target->GetActorLocation());
+					// Ignore Z axis.
+					const float DeltaX = Unit->GetActorLocation().X - Target->GetActorLocation().X;
+					const float DeltaY = Unit->GetActorLocation().Y - Target->GetActorLocation().Y;
+					const float DistSq = DeltaX * DeltaX + DeltaY * DeltaY;
+					const float AttackRange = Unit->GetDefaultStats().Range;
 
-					if (DistSq <= FMath::Square(Unit->GetAttackRange()))
+					if (DistSq <= FMath::Square(AttackRange))
 					{
 						AI->StopUnitMovement();
 					}
 					else
 					{
-						AI->MoveToEnemy(Target, Unit->GetAttackRange() * MovementThreshold);
+						AI->MoveToEnemy(Target, AttackRange * MoveToMultiplier);
 					}
 				}
 			}
-
-
 		};
 
-	//UpdateSide(GoodBase, GoodUnits);
+	UpdateSide(GoodBase, GoodUnits);
 	UpdateSide(EvilBase, EvilUnits);
 }
-UE_ENABLE_OPTIMIZATION

@@ -1,8 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "BinaryBlitzUnitPool.h"
+/* Unit */
 #include "../Unit/UnitStats.h"
 #include "../Unit/UnitBase.h"
+/* Other */
+#include "../BinaryBlitzGameInstance.h"
 #include "../BinaryBlitz.h"
 
 ABinaryBlitzUnitPool* ABinaryBlitzUnitPool::Instance = nullptr;
@@ -91,9 +94,13 @@ void ABinaryBlitzUnitPool::PreWarm()
 	if (bWarmed)
 		return;
 
-	for (auto& TableRow : UnitTable->GetRowMap())
+	UBinaryBlitzGameInstance* GameInstance = Cast<UBinaryBlitzGameInstance>(GetGameInstance());
+	if (!GameInstance || !GameInstance->GetUnitDataTable())
+		return;
+
+	for (const auto& TableRow : GameInstance->GetUnitDataTable()->GetRowMap())
 	{
-		if (FUnitTableRow* TempUnitTableRow = reinterpret_cast<FUnitTableRow*>(TableRow.Value))
+		if (const FUnitTableRow* TempUnitTableRow = reinterpret_cast<const FUnitTableRow*>(TableRow.Value))
 		{
 			if (!UnitRowName.Contains(TempUnitTableRow->Faction))
 				UnitRowName.Add(TempUnitTableRow->Faction, { });
@@ -144,6 +151,10 @@ void ABinaryBlitzUnitPool::ClearPool()
 
 AActor* ABinaryBlitzUnitPool::SpawnNewPooled(EFaction Faction, EUnitType Type)
 {
+	const UDataTable* UnitTable = nullptr;
+	if (UBinaryBlitzGameInstance* GameInstance = Cast<UBinaryBlitzGameInstance>(GetGameInstance()))
+		UnitTable = GameInstance->GetUnitDataTable();
+
 	if (!IsValid(UnitTable))
 	{
 		UE_LOG(LogBinaryBlitz, Error, TEXT("Unit pool missing unit table."))
@@ -163,17 +174,19 @@ AActor* ABinaryBlitzUnitPool::SpawnNewPooled(EFaction Faction, EUnitType Type)
 	if (!UnitRowName[Faction].Contains(Type))
 		UnitRowName[Faction].Add(Type, { });
 
-	FUnitTableRow* UnitTableRow = UnitTable->FindRow<FUnitTableRow>(UnitRowName[Faction][Type], nullptr);
+	FName RowName = UnitRowName[Faction][Type];
+	const FUnitTableRow* UnitTableRow = UnitTable->FindRow<FUnitTableRow>(UnitRowName[Faction][Type], nullptr);
 	if (!UnitTableRow)
 	{
 		UE_LOG(LogBinaryBlitz, Warning, TEXT("Unit table row name not cached."))
 
-		for (auto& TableRow : UnitTable->GetRowMap())
+		for (const auto& TableRow : UnitTable->GetRowMap())
 		{
-			if (FUnitTableRow* TempUnitTableRow = reinterpret_cast<FUnitTableRow*>(TableRow.Value))
+			if (const FUnitTableRow* TempUnitTableRow = reinterpret_cast<const FUnitTableRow*>(TableRow.Value))
 			{
 				if (TempUnitTableRow->Faction == Faction && TempUnitTableRow->Type == Type)
 				{
+					RowName = TableRow.Key;
 					UnitRowName[Faction][Type] = TableRow.Key;
 					UnitTableRow = TempUnitTableRow;
 					break;
@@ -204,7 +217,7 @@ AActor* ABinaryBlitzUnitPool::SpawnNewPooled(EFaction Faction, EUnitType Type)
 		Actor->SetActorTickEnabled(false);
 		if (AUnitBase* UnitBase = Cast<AUnitBase>(Actor))
 		{
-			UnitBase->InitStats(Faction, UnitTableRow->Stats);
+			UnitBase->InitStats(Faction, UnitTable, RowName);
 		}
 	}
 
@@ -216,7 +229,7 @@ void ABinaryBlitzUnitPool::ActivateActor(AActor* Actor, const FVector& Position)
 	Actor->SetActorHiddenInGame(false);
 	Actor->SetActorEnableCollision(true);
 	Actor->SetActorTickEnabled(true);
-	Actor->SetActorLocation(Position, true);
+	Actor->SetActorLocation(Position + SpawnOffset, true);
 	if (AUnitBase* UnitBase = Cast<AUnitBase>(Actor))
 	{
 		UnitBase->OnSpawned();

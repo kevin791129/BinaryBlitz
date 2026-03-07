@@ -59,8 +59,8 @@ protected:
 	UPROPERTY(EditAnywhere)
 	FVector InactivateLocation;
 
-	UPROPERTY(EditAnywhere)
-	UDataTable* UnitTable;
+	UPROPERTY(EditDefaultsOnly)
+	FVector SpawnOffset;
 
 private:
 	bool bWarmed;

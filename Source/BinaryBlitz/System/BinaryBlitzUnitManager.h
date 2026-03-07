@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "../Unit/UnitTypes.h"
 #include "BinaryBlitzUnitManager.generated.h"
 
 class AUnitBase;
@@ -28,6 +29,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void UnregisterUnit(AUnitBase* Unit);
 
+	const AUnitBase* GetBase(EFaction Faction) const;
+
+	const TArray<AUnitBase*>& GetActiveUnits(EFaction Faction) const;
+
 protected:
 	//~ Begin AActor Interface
 	virtual void BeginPlay() override;
@@ -51,11 +56,8 @@ protected:
 	UPROPERTY(Transient)
 	AUnitBase* EvilBase;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (DisplayName = "Update Interval"))
 	float UpdateInterval = 0.2f;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (DisplayName = "Movement Threshold"))
-	float MovementThreshold = 0.5f;
+	float MoveToMultiplier = 0.5f;
 
 private:
 	float UpdateTimer = 0.0f;
