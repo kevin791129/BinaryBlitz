@@ -21,6 +21,11 @@ public:
 	void CollectMoney(EFaction Faction, int Amount);
 
 protected:
+	//~ Begin AActor Interface
+	virtual void BeginPlay() override;
+	//~ End AActor Interface
+
+protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Good, meta = (DisplayName = "Coins"))
 	int GoodMoney = 1000;
 

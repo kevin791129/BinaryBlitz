@@ -12,6 +12,7 @@ enum class EUnitState : uint8
 {
 	Idle,
 	Moving,
+	TurningToAttack,
 	Attacking,
 	Dead
 };
@@ -62,6 +63,8 @@ protected:
 	void UpdateHealthBarRotation();
 
 	bool IsTargetInRange() const;
+
+	bool IsFacingTarget() const;
 
 	void TryAttack();
 

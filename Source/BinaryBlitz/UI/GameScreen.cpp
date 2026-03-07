@@ -19,6 +19,8 @@ void UGameScreen::NativeOnInitialized()
 	SmallBtn->OnClicked.AddDynamic(this, &UGameScreen::OnSmallUnitBtnClicked);
 	MediumBtn->OnClicked.AddDynamic(this, &UGameScreen::OnMediumUnitBtnClicked);
 	LargeBtn->OnClicked.AddDynamic(this, &UGameScreen::OnLargeUnitBtnClicked);
+	FlyingBtn->OnClicked.AddDynamic(this, &UGameScreen::OnFlyingUnitBtnClicked);
+	TowerBtn->OnClicked.AddDynamic(this, &UGameScreen::OnTowerUnitBtnClicked);
 
 	UBinaryBlitzGameInstance* GameInstance = Cast<UBinaryBlitzGameInstance>(GetGameInstance());
 	if (!GameInstance || !GameInstance->GetUnitDataTable())
@@ -47,6 +49,14 @@ void UGameScreen::NativeOnInitialized()
 			case EUnitType::Large:
 				LargeText->SetText(FText::FromString(TempUnitTableRow->Name));
 				LargeCost->SetText(FText::FromString(FString::Printf(TEXT("$%d"), TempCost)));
+				break;
+			case EUnitType::Flying:
+				FlyingText->SetText(FText::FromString(TempUnitTableRow->Name));
+				FlyingCost->SetText(FText::FromString(FString::Printf(TEXT("$%d"), TempCost)));
+				break;
+			case EUnitType::Tower:
+				TowerText->SetText(FText::FromString(TempUnitTableRow->Name));
+				TowerCost->SetText(FText::FromString(FString::Printf(TEXT("$%d"), TempCost)));
 				break;
 			}
 		}
@@ -96,6 +106,8 @@ void UGameScreen::OnSmallUnitBtnClicked()
 	SmallBtn->SetBackgroundColor(SelectColor);
 	MediumBtn->SetBackgroundColor(DeselectColor);
 	LargeBtn->SetBackgroundColor(DeselectColor);
+	FlyingBtn->SetBackgroundColor(DeselectColor);
+	TowerBtn->SetBackgroundColor(DeselectColor);
 }
 
 void UGameScreen::OnMediumUnitBtnClicked()
@@ -104,6 +116,8 @@ void UGameScreen::OnMediumUnitBtnClicked()
 	SmallBtn->SetBackgroundColor(DeselectColor);
 	MediumBtn->SetBackgroundColor(SelectColor);
 	LargeBtn->SetBackgroundColor(DeselectColor);
+	FlyingBtn->SetBackgroundColor(DeselectColor);
+	TowerBtn->SetBackgroundColor(DeselectColor);
 }
 
 void UGameScreen::OnLargeUnitBtnClicked()
@@ -112,6 +126,28 @@ void UGameScreen::OnLargeUnitBtnClicked()
 	SmallBtn->SetBackgroundColor(DeselectColor);
 	MediumBtn->SetBackgroundColor(DeselectColor);
 	LargeBtn->SetBackgroundColor(SelectColor);
+	FlyingBtn->SetBackgroundColor(DeselectColor);
+	TowerBtn->SetBackgroundColor(DeselectColor);
+}
+
+void UGameScreen::OnFlyingUnitBtnClicked()
+{
+	SpawnType = EUnitType::Flying;
+	SmallBtn->SetBackgroundColor(DeselectColor);
+	MediumBtn->SetBackgroundColor(DeselectColor);
+	LargeBtn->SetBackgroundColor(DeselectColor);
+	FlyingBtn->SetBackgroundColor(SelectColor);
+	TowerBtn->SetBackgroundColor(DeselectColor);
+}
+
+void UGameScreen::OnTowerUnitBtnClicked()
+{
+	SpawnType = EUnitType::Tower;
+	SmallBtn->SetBackgroundColor(DeselectColor);
+	MediumBtn->SetBackgroundColor(DeselectColor);
+	LargeBtn->SetBackgroundColor(DeselectColor);
+	FlyingBtn->SetBackgroundColor(DeselectColor);
+	TowerBtn->SetBackgroundColor(SelectColor);
 }
 
 void UGameScreen::ToggleUnitButton(EUnitType Type, bool bEnable)
@@ -132,6 +168,16 @@ void UGameScreen::ToggleUnitButton(EUnitType Type, bool bEnable)
 		LargeBtn->SetIsEnabled(bEnable);
 		LargeText->SetColorAndOpacity(bEnable ? EnableColor : DisableColor);
 		LargeCost->SetColorAndOpacity(bEnable ? EnableColor : DisableColor);
+		break;
+	case EUnitType::Flying:
+		FlyingBtn->SetIsEnabled(bEnable);
+		FlyingText->SetColorAndOpacity(bEnable ? EnableColor : DisableColor);
+		FlyingCost->SetColorAndOpacity(bEnable ? EnableColor : DisableColor);
+		break;
+	case EUnitType::Tower:
+		TowerBtn->SetIsEnabled(bEnable);
+		TowerText->SetColorAndOpacity(bEnable ? EnableColor : DisableColor);
+		TowerCost->SetColorAndOpacity(bEnable ? EnableColor : DisableColor);
 		break;
 	}
 }

@@ -155,21 +155,20 @@ void ABinaryBlitzUnitManager::UpdateInternal()
 				Target = FindClosestEnemy(Unit);
 				Unit->SetTarget(Target);
 
-				if (AUnitMovementController* AI = Cast<AUnitMovementController>(Unit->GetController()))
+				if (AUnitMovementController* UnitMovementController = Cast<AUnitMovementController>(Unit->GetController()))
 				{
-					// Ignore Z axis.
-					const float DeltaX = Unit->GetActorLocation().X - Target->GetActorLocation().X;
-					const float DeltaY = Unit->GetActorLocation().Y - Target->GetActorLocation().Y;
-					const float DistSq = DeltaX * DeltaX + DeltaY * DeltaY;
+					const float DistSq = FVector::DistSquared2D(Unit->GetActorLocation(), Target->GetActorLocation());
 					const float AttackRange = Unit->GetDefaultStats().Range;
 
 					if (DistSq <= FMath::Square(AttackRange))
 					{
-						AI->StopUnitMovement();
+						UnitMovementController->StopUnitMovement();
+						UnitMovementController->SetCombatFocus(Target);
 					}
 					else
 					{
-						AI->MoveToEnemy(Target, AttackRange * MoveToMultiplier);
+						UnitMovementController->ClearCombatFocus();
+						UnitMovementController->MoveToEnemy(Target, AttackRange * MoveToMultiplier);
 					}
 				}
 			}

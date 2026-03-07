@@ -32,6 +32,8 @@ protected:
 
 	void OnSpawnUnitAction();
 
+	bool IsOnCorrectSide(const FVector2D& Position) const;
+
 protected:
 	/** Default mapping context */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Input, meta = (DisplayName = "Default Mapping Context"))
@@ -44,11 +46,15 @@ protected:
 	AActor* SpawnIndicator = nullptr;
 	UPROPERTY(EditDefaultsOnly, Category = Indicator)
 	TSubclassOf<AActor> SpawnIndicatorClass;
+	UPROPERTY(EditAnywhere, Category = Indicator)
+	TArray<FVector2D> DivisionPoints;
 	
 	UPROPERTY(BlueprintReadOnly, Category = UI)
 	UGameScreen* GameScreen;
 	UPROPERTY(EditDefaultsOnly, Category = UI)
 	TSubclassOf<UGameScreen> GameScreenClass;
+
+	
 
 private:
 	bool bValidSpawn = false;

@@ -20,6 +20,9 @@ public:
 	/** Updates Character Movement : Max Walk Speed (default 600 cm/s) */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Unit Stats", meta = (DisplayName = "Movement Speed"))
 	float Speed;
+	/** Updates Character Movement : Rotation Rate (default 360 degree/s) */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Unit Stats", meta = (DisplayName = "Rotation Speed"))
+	float RotateSpeed;
 	/** Damage per attack */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Unit Stats", meta = (DisplayName = "Damage"))
 	float ATK;
@@ -29,6 +32,9 @@ public:
 	/** Attack range (cm) */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Unit Stats", meta = (DisplayName = "Attack Range"))
 	float Range;
+	/** Attack facing dot product (keep around 0.95) */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Unit Stats", meta = (DisplayName = "Attack Facing (Dot)"))
+	float FacingDot;
 	/** Cost to deploy unit */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Unit Stats", meta = (DisplayName = "Cost"))
 	float Cost;

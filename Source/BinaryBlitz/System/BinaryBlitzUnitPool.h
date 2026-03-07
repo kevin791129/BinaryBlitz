@@ -47,7 +47,7 @@ protected:
 
 	AActor* SpawnNewPooled(EFaction Faction, EUnitType Type);
 
-	void ActivateActor(AActor* Actor, const FVector& Position);
+	void ActivateActor(AActor* Actor, const FVector& Position, const FRotator& Rotation);
 
 	void DeactivateActor(AActor* Actor);
 
@@ -59,8 +59,14 @@ protected:
 	UPROPERTY(EditAnywhere)
 	FVector InactivateLocation;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = Spawn)
 	FVector SpawnOffset;
+
+	UPROPERTY(EditDefaultsOnly, Category = Spawn)
+	FRotator GoodSpawnRotation;
+
+	UPROPERTY(EditDefaultsOnly, Category = Spawn)
+	FRotator EvilSpawnRotation;
 
 private:
 	bool bWarmed;

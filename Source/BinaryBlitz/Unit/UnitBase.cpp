@@ -38,6 +38,10 @@ AUnitBase::AUnitBase()
 
 	GetCapsuleComponent()->SetCollisionObjectType(ECC_Pawn);
 	GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Block);
+
+	bUseControllerRotationYaw = false;
+	GetCharacterMovement()->bOrientRotationToMovement = false;
+	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 }
 UE_DISABLE_OPTIMIZATION
 void AUnitBase::BeginPlay()
@@ -69,6 +73,17 @@ void AUnitBase::Tick(float DeltaSeconds)
 		return;
 	}
 
+	// Death plane.
+	if (GetActorLocation().Z <= -1200.0f)
+	{
+		GetCharacterMovement()->StopMovementImmediately();
+		GetCharacterMovement()->Velocity = FVector::ZeroVector;
+		GetCharacterMovement()->DisableMovement();
+
+		ABinaryBlitzUnitPool::GetInstance()->ReleaseActor(this);
+		ABinaryBlitzUnitManager::GetInstance()->UnregisterUnit(this);
+	}
+
 	UpdateHealthBarRotation();
 
 	UpdateCombat(DeltaSeconds);
@@ -80,15 +95,12 @@ void AUnitBase::InitStats(const EFaction InFaction, const UDataTable* Table, con
 	TableRowHandle.DataTable = Table;
 	TableRowHandle.RowName = RowName;
 
-	UCharacterMovementComponent* CharacterMovementComponent = GetComponentByClass<UCharacterMovementComponent>();
-	if (IsValid(CharacterMovementComponent))
-	{
-		CharacterMovementComponent->MaxWalkSpeed = GetDefaultStats().Speed;
+	GetCharacterMovement()->MaxWalkSpeed = GetDefaultStats().Speed;
+	GetCharacterMovement()->RotationRate = FRotator(0.f, GetDefaultStats().RotateSpeed, 0.f);
 
-		CharacterMovementComponent->StopMovementImmediately();
-		CharacterMovementComponent->Velocity = FVector::ZeroVector;
-		CharacterMovementComponent->DisableMovement();
-	}
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->Velocity = FVector::ZeroVector;
+	GetCharacterMovement()->DisableMovement();
 
 	if (const UBinaryBlitzConfig* Config = GetDefault<UBinaryBlitzConfig>())
 	{
@@ -103,13 +115,9 @@ void AUnitBase::OnSpawned()
 	UnitState = EUnitState::Idle;
 	ABinaryBlitzUnitManager::GetInstance()->RegisterUnit(this);
 
-	UCharacterMovementComponent* CharacterMovementComponent = GetComponentByClass<UCharacterMovementComponent>();
-	if (IsValid(CharacterMovementComponent))
-	{
-		CharacterMovementComponent->StopMovementImmediately();
-		CharacterMovementComponent->Velocity = FVector::ZeroVector;
-		CharacterMovementComponent->SetMovementMode(MOVE_Walking);
-	}
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->Velocity = FVector::ZeroVector;
+	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 
 	if (HealthBarComponent && HealthBarComponent->GetWidget())
 	{
@@ -128,6 +136,14 @@ void AUnitBase::OnSpawned()
 void AUnitBase::SetTarget(AUnitBase* InTarget)
 {
 	CurrentTarget = InTarget;
+
+	if (AUnitMovementController* UnitMovementController = Cast<AUnitMovementController>(GetController()))
+	{
+		if (IsValid(CurrentTarget))
+			UnitMovementController->SetCombatFocus(CurrentTarget);
+		else
+			UnitMovementController->ClearCombatFocus();
+	}
 }
 
 void AUnitBase::ReceiveDamage(float Amount)
@@ -190,14 +206,39 @@ void AUnitBase::UpdateCombat(float DeltaSeconds)
 {
 	CooldownTimer -= DeltaSeconds;
 
+	AUnitMovementController* UnitMovementController = Cast<AUnitMovementController>(GetController());
+
 	if (IsValid(CurrentTarget) && IsTargetInRange())
 	{
-		UnitState = EUnitState::Attacking;
-		TryAttack();
+		
+
+		if (IsValid(UnitMovementController))
+		{
+			UnitMovementController->StopUnitMovement();
+			UnitMovementController->SetCombatFocus(CurrentTarget);
+		}
+
+		if (IsFacingTarget())
+		{
+			UnitState = EUnitState::Attacking;
+			TryAttack();
+		}
+		else
+		{
+			UnitState = EUnitState::TurningToAttack;
+		}
 	}
 	else
 	{
-		UnitState = AIControllerClass != nullptr ? EUnitState::Moving : EUnitState::Idle;
+		if (IsValid(UnitMovementController))
+		{
+			UnitMovementController->ClearCombatFocus();
+			UnitState = EUnitState::Moving;
+		}
+		else
+		{
+			UnitState = EUnitState::Idle;
+		}
 	}
 }
 
@@ -226,11 +267,20 @@ bool AUnitBase::IsTargetInRange() const
 	if (!IsValid(CurrentTarget))
 		return false;
 
-	// Ignore Z axis.
-	const float DeltaX = GetActorLocation().X - CurrentTarget->GetActorLocation().X;
-	const float DeltaY = GetActorLocation().Y - CurrentTarget->GetActorLocation().Y;
-	const float DistSq = DeltaX * DeltaX + DeltaY * DeltaY;
+	const float DistSq = FVector::DistSquared2D(GetActorLocation(), CurrentTarget->GetActorLocation());
 	return DistSq <= FMath::Square(GetDefaultStats().Range);
+}
+
+bool AUnitBase::IsFacingTarget() const
+{
+	if (!IsValid(CurrentTarget))
+		return false;
+
+	const FVector Forward = GetActorForwardVector().GetSafeNormal2D();
+	const FVector ToTarget = (CurrentTarget->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
+
+	const float Dot = FVector::DotProduct(Forward, ToTarget);
+	return Dot >= GetDefaultStats().FacingDot;
 }
 
 void AUnitBase::TryAttack()
@@ -241,6 +291,13 @@ void AUnitBase::TryAttack()
 	if (CurrentTarget->IsAlive())
 	{
 		CurrentTarget->ReceiveDamage(GetDefaultStats().ATK);
+		if (!CurrentTarget->IsAlive())
+		{
+			if (AUnitMovementController* UnitMovementController = Cast<AUnitMovementController>(GetController()))
+			{
+				UnitMovementController->ClearCombatFocus();
+			}
+		}
 		CooldownTimer = GetDefaultStats().Cooldown;
 
 		OnAttack_BP();
@@ -260,13 +317,9 @@ void AUnitBase::OnDeath()
 	GetWorld()->GetTimerManager().ClearTimer(PassiveIncomeHandle);
 	PassiveIncomeHandle.Invalidate();
 
-	UCharacterMovementComponent* CharacterMovementComponent = GetComponentByClass<UCharacterMovementComponent>();
-	if (IsValid(CharacterMovementComponent))
-	{
-		CharacterMovementComponent->StopMovementImmediately();
-		CharacterMovementComponent->Velocity = FVector::ZeroVector;
-		CharacterMovementComponent->DisableMovement();
-	}
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->Velocity = FVector::ZeroVector;
+	GetCharacterMovement()->DisableMovement();
 
 	ABinaryBlitzUnitPool::GetInstance()->ReleaseActor(this);
 	ABinaryBlitzUnitManager::GetInstance()->UnregisterUnit(this);

@@ -30,6 +30,12 @@ public:
     UPROPERTY(Config, EditAnywhere, Category = "Enemy AI")
     float WaitWeight = 95.0f;
 
+    UPROPERTY(Config, EditAnywhere, Category = "Balancing")
+    int GoodStartingCash = 1000;
+
+    UPROPERTY(Config, EditAnywhere, Category = "Balancing")
+    int EvilStartingCash = 1000;
+
     /* Coins per second */
     UPROPERTY(Config, EditAnywhere, Category = "Balancing")
     int GoodPassiveIncome = 10.0f;

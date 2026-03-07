@@ -54,7 +54,7 @@ AActor* ABinaryBlitzUnitPool::AquireActor(EFaction Faction, EUnitType Type, cons
 			continue;
 
 		PoolEntry.bInUse = true;
-		ActivateActor(PoolEntry.Unit, Position);
+		ActivateActor(PoolEntry.Unit, Position, Faction == EFaction::Good ? GoodSpawnRotation : EvilSpawnRotation);
 		return PoolEntry.Unit;
 	}
 
@@ -62,7 +62,7 @@ AActor* ABinaryBlitzUnitPool::AquireActor(EFaction Faction, EUnitType Type, cons
 	if (!NewActor)
 		return nullptr;
 
-	ActivateActor(NewActor, Position);
+	ActivateActor(NewActor, Position, Faction == EFaction::Good ? GoodSpawnRotation : EvilSpawnRotation);
 	UnitPool[Faction][Type].Add(FUnitPoolEntry(NewActor, true));
 	return NewActor;
 }
@@ -224,12 +224,13 @@ AActor* ABinaryBlitzUnitPool::SpawnNewPooled(EFaction Faction, EUnitType Type)
 	return Actor;
 }
 UE_DISABLE_OPTIMIZATION
-void ABinaryBlitzUnitPool::ActivateActor(AActor* Actor, const FVector& Position)
+void ABinaryBlitzUnitPool::ActivateActor(AActor* Actor, const FVector& Position, const FRotator& Rotation)
 {
 	Actor->SetActorHiddenInGame(false);
 	Actor->SetActorEnableCollision(true);
 	Actor->SetActorTickEnabled(true);
 	Actor->SetActorLocation(Position + SpawnOffset, true);
+	Actor->SetActorRotation(Rotation);
 	if (AUnitBase* UnitBase = Cast<AUnitBase>(Actor))
 	{
 		UnitBase->OnSpawned();

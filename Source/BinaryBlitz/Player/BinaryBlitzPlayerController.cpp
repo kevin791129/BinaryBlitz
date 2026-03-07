@@ -55,8 +55,11 @@ void ABinaryBlitzPlayerController::Tick(float DeltaSeconds)
 
 			if (NavSys->ProjectPointToNavigation(HitResult.Location, NavLocation, FVector(100.0f)))
 			{
-				bValidSpawn = true;
-				SpawnPoint = NavLocation.Location;
+				if (IsOnCorrectSide(FVector2D(NavLocation.Location)))
+				{
+					bValidSpawn = true;
+					SpawnPoint = NavLocation.Location;
+				}
 			}
 		}
 	}
@@ -85,4 +88,21 @@ void ABinaryBlitzPlayerController::OnSpawnUnitAction()
 	{
 		GameScreen->TrySpawnUnit(SpawnPoint);
 	}
+}
+
+bool ABinaryBlitzPlayerController::IsOnCorrectSide(const FVector2D& Position) const
+{
+	if (DivisionPoints.Num() < 2)
+		return true;
+
+	for (int i = 0; i < DivisionPoints.Num() - 1; i++)
+	{
+		const FVector2D LineVec = DivisionPoints[i + 1] - DivisionPoints[i];
+		const FVector2D PointVec = Position - DivisionPoints[i];
+
+		if (LineVec.X * PointVec.Y - LineVec.Y * PointVec.X > 0.0f)
+			return false;
+	}
+
+	return true;
 }

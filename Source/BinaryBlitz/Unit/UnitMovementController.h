@@ -20,5 +20,14 @@ public:
     void MoveToEnemy(AUnitBase* Target, float AcceptanceRadius = 100.f);
 
     UFUNCTION(BlueprintCallable)
+    void MoveToGoalLocation(const FVector& GoalLocation, float AcceptanceRadius = 100.f);
+
+    UFUNCTION(BlueprintCallable)
     void StopUnitMovement();
+
+    UFUNCTION(BlueprintCallable)
+    void SetCombatFocus(AUnitBase* Target);
+
+    UFUNCTION(BlueprintCallable)
+    void ClearCombatFocus();
 };

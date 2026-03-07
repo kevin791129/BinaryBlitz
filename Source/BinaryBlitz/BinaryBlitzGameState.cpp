@@ -1,6 +1,18 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "BinaryBlitzGameState.h"
+#include "BinaryBlitzConfig.h"
+
+void ABinaryBlitzGameState::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (const UBinaryBlitzConfig* Config = GetDefault<UBinaryBlitzConfig>())
+	{
+		GoodMoney = Config->GoodStartingCash;
+		EvilMoney = Config->EvilStartingCash;
+	}
+}
 
 int ABinaryBlitzGameState::GetMoney(EFaction Faction) const
 {
