@@ -12,7 +12,7 @@ class BINARYBLITZ_API UBinaryBlitzConfig : public UDeveloperSettings
     GENERATED_BODY()
 
 public:
-    UPROPERTY(Config, EditAnywhere, Category="Enemy AI")
+    UPROPERTY(Config, EditAnywhere, Category = "Enemy AI")
     float DefendThreshold = 3.0f;
 
     UPROPERTY(Config, EditAnywhere, Category = "Enemy AI")
@@ -44,6 +44,7 @@ public:
     UPROPERTY(Config, EditAnywhere, Category = "Balancing")
     int EvilPassiveIncome = 10.0f;
 
+    /* Percentage of unit cost gained on death */
     UPROPERTY(Config, EditAnywhere, Category = "Balancing")
     float CoinDropMultiplier = 0.5f;
 

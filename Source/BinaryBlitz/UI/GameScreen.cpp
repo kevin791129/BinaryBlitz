@@ -80,6 +80,8 @@ void UGameScreen::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 		UpdateButtons(GameState, EUnitType::Small);
 		UpdateButtons(GameState, EUnitType::Medium);
 		UpdateButtons(GameState, EUnitType::Large);
+		UpdateButtons(GameState, EUnitType::Flying);
+		UpdateButtons(GameState, EUnitType::Tower);
 
 		const int CurrentMoney = GameState->GetMoney(EFaction::Good);
 		CoinCount->SetText(FText::FromString(FString::Printf(TEXT("Cash: $%d"), CurrentMoney)));
