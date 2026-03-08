@@ -14,6 +14,21 @@ void ABinaryBlitzGameState::BeginPlay()
 	}
 }
 
+void ABinaryBlitzGameState::StartGame()
+{
+	GameStartTime = GetWorld()->GetTimeSeconds();
+	State = EGameState::InProgress;
+	OnGameStateChanged.Broadcast(State);
+}
+
+void ABinaryBlitzGameState::EndGame(bool bInGoodWin)
+{
+	bGoodWin = bInGoodWin;
+	GameEndTime = GetWorld()->GetTimeSeconds();
+	State = EGameState::Over;
+	OnGameStateChanged.Broadcast(State);
+}
+
 int ABinaryBlitzGameState::GetMoney(EFaction Faction) const
 {
 	return Faction == EFaction::Good ? GoodMoney : EvilMoney;

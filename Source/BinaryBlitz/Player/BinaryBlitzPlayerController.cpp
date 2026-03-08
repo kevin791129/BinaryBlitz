@@ -2,7 +2,9 @@
 
 #include "BinaryBlitzPlayerController.h"
 /* Widgets */
+#include "../UI/StartScreen.h"
 #include "../UI/GameScreen.h"
+#include "../UI/EndScreen.h"
 /* Input */
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -27,12 +29,19 @@ void ABinaryBlitzPlayerController::BeginPlay()
 		SpawnIndicator->SetActorHiddenInGame(true);
 	}
 
-	if (GameScreenClass)
+	if (StartScreenClass)
 	{
-		GameScreen = CreateWidget<UGameScreen>(this, GameScreenClass, FName("GameScreen"));
-		if (GameScreen)
-			GameScreen->AddToViewport();
+		StartScreen = CreateWidget<UStartScreen>(this, StartScreenClass, FName("StartScreen"));
+		if (StartScreen)
+			StartScreen->AddToViewport();
 	}
+
+	if (ABinaryBlitzGameState* GameState = Cast<ABinaryBlitzGameState>(GetWorld()->GetGameState()))
+	{
+		GameState->OnGameStateChanged.AddDynamic(this, &ABinaryBlitzPlayerController::OnGameStateChanged);
+	}
+
+	SetInputMode(FInputModeUIOnly());
 }
  
 void ABinaryBlitzPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -105,4 +114,42 @@ bool ABinaryBlitzPlayerController::IsOnCorrectSide(const FVector2D& Position) co
 	}
 
 	return true;
+}
+
+void ABinaryBlitzPlayerController::OnGameStateChanged(EGameState State)
+{
+	if (State == EGameState::InProgress)
+	{
+		SetInputMode(FInputModeGameAndUI());
+		if (IsValid(StartScreen))
+		{
+			StartScreen->RemoveFromViewport();
+		}
+		if (GameScreenClass)
+		{
+			GameScreen = CreateWidget<UGameScreen>(this, GameScreenClass, FName("GameScreen"));
+			if (GameScreen)
+				GameScreen->AddToViewport();
+		}
+	}
+	else if (State == EGameState::Over)
+	{
+		SetInputMode(FInputModeUIOnly());
+		if (IsValid(GameScreen))
+		{
+			GameScreen->RemoveFromViewport();
+		}
+		if (EndScreenClass)
+		{
+			EndScreen = CreateWidget<UEndScreen>(this, EndScreenClass, FName("EndScreen"));
+			if (EndScreen)
+			{
+				if (ABinaryBlitzGameState* GameState = Cast<ABinaryBlitzGameState>(GetWorld()->GetGameState()))
+				{
+					EndScreen->DisplayResult(GameState->GetGoodWin(), GameState->GetGameTime());
+				}
+				EndScreen->AddToViewport();
+			}
+		}
+	}
 }

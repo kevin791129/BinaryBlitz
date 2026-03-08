@@ -4,11 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "../Unit/UnitTypes.h"
+#include "../BinaryBlitzGameState.h"
 #include "BinaryBlitzPlayerController.generated.h"
 
 class UInputMappingContext;
 class UInputAction;
+class UStartScreen;
 class UGameScreen;
+class UEndScreen;
 
 UCLASS(meta = (DisplayName = "Binary Blitz Player Controller"))
 class BINARYBLITZ_API ABinaryBlitzPlayerController : public APlayerController
@@ -34,6 +37,9 @@ protected:
 
 	bool IsOnCorrectSide(const FVector2D& Position) const;
 
+	UFUNCTION()
+	void OnGameStateChanged(EGameState State);
+
 protected:
 	/** Default mapping context */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Input, meta = (DisplayName = "Default Mapping Context"))
@@ -50,9 +56,17 @@ protected:
 	TArray<FVector2D> DivisionPoints;
 	
 	UPROPERTY(BlueprintReadOnly, Category = UI)
+	UStartScreen* StartScreen;
+	UPROPERTY(EditDefaultsOnly, Category = UI)
+	TSubclassOf<UStartScreen> StartScreenClass;
+	UPROPERTY(BlueprintReadOnly, Category = UI)
 	UGameScreen* GameScreen;
 	UPROPERTY(EditDefaultsOnly, Category = UI)
 	TSubclassOf<UGameScreen> GameScreenClass;
+	UPROPERTY(BlueprintReadOnly, Category = UI)
+	UEndScreen* EndScreen;
+	UPROPERTY(EditDefaultsOnly, Category = UI)
+	TSubclassOf<UEndScreen> EndScreenClass;
 
 	
 

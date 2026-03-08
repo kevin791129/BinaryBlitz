@@ -58,10 +58,6 @@ void AUnitBase::BeginPlay()
 				(Faction == EFaction::Good ? Config->GoodPassiveIncome : Config->EvilPassiveIncome) : 0;
 		}
 	}
-	if (PassiveIncome > 0)
-	{
-		GetWorld()->GetTimerManager().SetTimer(PassiveIncomeHandle, this, &AUnitBase::OnPassiveIncome, 1.0f, true);
-	}
 }
 
 void AUnitBase::Tick(float DeltaSeconds)
@@ -127,10 +123,7 @@ void AUnitBase::OnSpawned()
 		}
 	}
 
-	if (PassiveIncome > 0)
-	{
-		GetWorld()->GetTimerManager().SetTimer(PassiveIncomeHandle, this, &AUnitBase::OnPassiveIncome, 1.0f, true);
-	}
+	StartPassiveIncome();
 }
 
 void AUnitBase::SetTarget(AUnitBase* InTarget)
@@ -200,6 +193,26 @@ const FEnemyAIFactors& AUnitBase::GetEnemyAIFactors() const
 float AUnitBase::GetHealthPercent() const
 {
 	return FMath::Clamp(HP / GetDefaultStats().MaxHP, 0.0f, 1.0f);
+}
+
+void AUnitBase::StartPassiveIncome()
+{
+	if (PassiveIncome > 0)
+	{
+		GetWorld()->GetTimerManager().SetTimer(PassiveIncomeHandle, this, &AUnitBase::OnPassiveIncome, 1.0f, true);
+	}
+}
+
+void AUnitBase::Kill()
+{
+	UnitState = EUnitState::Dead;
+
+	GetWorld()->GetTimerManager().ClearTimer(PassiveIncomeHandle);
+	PassiveIncomeHandle.Invalidate();
+
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->Velocity = FVector::ZeroVector;
+	GetCharacterMovement()->DisableMovement();
 }
 
 void AUnitBase::UpdateCombat(float DeltaSeconds)

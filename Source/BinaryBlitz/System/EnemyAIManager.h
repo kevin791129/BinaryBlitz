@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "MapRegion.h"
 #include "../Unit/UnitTypes.h"
+#include "../BinaryBlitzGameState.h"
 #include "EnemyAIManager.generated.h"
 
 class AUnitBase;
@@ -86,6 +87,9 @@ protected:
 
 	FSpawnResult TrySpawnUnit(EUnitType Type, const FVector& Position);
 
+	UFUNCTION()
+	void OnGameStateChanged(EGameState State);
+
 protected:
 
 	UPROPERTY(Transient)
@@ -115,6 +119,8 @@ protected:
 #endif
 
 private:
+	bool bRun = false;
+
 	float UpdateTimer = 0.0f;
 
 	float SpawnCooldownTimer = 0.0f;

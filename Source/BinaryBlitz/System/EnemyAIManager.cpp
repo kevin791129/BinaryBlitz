@@ -7,7 +7,6 @@
 /* Managers */
 #include "BinaryBlitzUnitManager.h"
 #include "BinaryBlitzUnitPool.h"
-#include "../BinaryBlitzGameState.h"
 #include "../BinaryBlitzGameInstance.h"
 /* Other */
 #include "Kismet/GameplayStatics.h"
@@ -33,6 +32,11 @@ void AEnemyAIManager::BeginPlay()
 	else
 	{
 		UE_LOG(LogBinaryBlitz, Warning, TEXT("Creating duplicate enemy AI actor."))
+	}
+
+	if (ABinaryBlitzGameState* GameState = Cast<ABinaryBlitzGameState>(GetWorld()->GetGameState()))
+	{
+		GameState->OnGameStateChanged.AddDynamic(this, &AEnemyAIManager::OnGameStateChanged);
 	}
 
 	TArray<AActor*> FoundActors;
@@ -94,6 +98,9 @@ void AEnemyAIManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void AEnemyAIManager::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+
+	if (!bRun)
+		return;
 
 	UpdateTimer += DeltaSeconds;
 	SpawnCooldownTimer -= DeltaSeconds;
@@ -298,3 +305,14 @@ AEnemyAIManager::FSpawnResult AEnemyAIManager::TrySpawnUnit(EUnitType Type, cons
 	return AEnemyAIManager::FSpawnResult();
 }
 UE_ENABLE_OPTIMIZATION
+void AEnemyAIManager::OnGameStateChanged(EGameState State)
+{
+	if (State == EGameState::InProgress)
+	{
+		bRun = true;
+	}
+	else if (State == EGameState::Over)
+	{
+		bRun = false;
+	}
+}

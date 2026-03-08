@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "../Unit/UnitTypes.h"
+#include "../BinaryBlitzGameState.h"
 #include "BinaryBlitzUnitManager.generated.h"
 
 class AUnitBase;
@@ -43,6 +44,9 @@ protected:
 
 	void UpdateInternal();
 
+	UFUNCTION()
+	void OnGameStateChanged(EGameState State);
+
 protected:
 	UPROPERTY(Transient)
 	TArray<AUnitBase*> GoodUnits;
@@ -60,6 +64,8 @@ protected:
 	float MoveToMultiplier = 0.5f;
 
 private:
+	bool bRun = false;
+
 	float UpdateTimer = 0.0f;
 
 	static ABinaryBlitzUnitManager* Instance;

@@ -53,6 +53,12 @@ public:
 
 	float GetHealthPercent() const;
 
+	UFUNCTION(BlueprintCallable)
+	void StartPassiveIncome();
+
+	/* Mostly used on game over */
+	void Kill();
+
 protected:
 	//~ Begin AActor Interface
 	virtual void BeginPlay() override;

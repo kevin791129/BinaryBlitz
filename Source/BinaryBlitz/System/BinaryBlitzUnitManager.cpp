@@ -30,6 +30,11 @@ void ABinaryBlitzUnitManager::BeginPlay()
 		UE_LOG(LogBinaryBlitz, Warning, TEXT("Creating duplicate unit manager actor."))
 	}
 
+	if (ABinaryBlitzGameState* GameState = Cast<ABinaryBlitzGameState>(GetWorld()->GetGameState()))
+	{
+		GameState->OnGameStateChanged.AddDynamic(this, &ABinaryBlitzUnitManager::OnGameStateChanged);
+	}
+
 	TArray<AActor*> FoundActors;
 	UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName("GoodBase"), FoundActors);
 	if (FoundActors.Num() > 0)
@@ -69,6 +74,9 @@ void ABinaryBlitzUnitManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void ABinaryBlitzUnitManager::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+
+	if (!bRun)
+		return;
 
 	UpdateTimer += DeltaSeconds;
 	if (UpdateTimer >= UpdateInterval)
@@ -117,7 +125,7 @@ AUnitBase* ABinaryBlitzUnitManager::FindClosestEnemy(AUnitBase* Unit)
 
 	const TArray<AUnitBase*>& Opponents = (Unit->GetFaction() == EFaction::Good) ? EvilUnits : GoodUnits;
 	AUnitBase* BestTarget = (Unit->GetFaction() == EFaction::Good) ? EvilBase : GoodBase;;
-	float BestDistSq = FVector::DistSquared(Unit->GetActorLocation(), BestTarget->GetActorLocation());
+	float BestDistSq = FVector::DistSquared2D(Unit->GetActorLocation(), BestTarget->GetActorLocation());
 
 	for (AUnitBase* Candidate : Opponents)
 	{
@@ -126,10 +134,9 @@ AUnitBase* ABinaryBlitzUnitManager::FindClosestEnemy(AUnitBase* Unit)
 			continue;
 		}
 
-		const float DistSq = FVector::DistSquared(Unit->GetActorLocation(), Candidate->GetActorLocation());
-		const float PerceptionRangeSq = Unit->GetDefaultStats().PerceptionRange * Unit->GetDefaultStats().PerceptionRange;
+		const float DistSq = FVector::DistSquared2D(Unit->GetActorLocation(), Candidate->GetActorLocation());
 
-		if (DistSq > PerceptionRangeSq)
+		if (DistSq > FMath::Square(Unit->GetDefaultStats().PerceptionRange))
 		{
 			continue;
 		}
@@ -182,4 +189,21 @@ void ABinaryBlitzUnitManager::UpdateInternal()
 
 	UpdateSide(GoodBase, GoodUnits);
 	UpdateSide(EvilBase, EvilUnits);
+}
+
+void ABinaryBlitzUnitManager::OnGameStateChanged(EGameState State)
+{
+	if (State == EGameState::InProgress)
+	{
+		bRun = true;
+	}
+	else if (State == EGameState::Over)
+	{
+		bRun = false;
+
+		for (AUnitBase* Unit : GoodUnits)
+			Unit->Kill();
+		for (AUnitBase* Unit : EvilUnits)
+			Unit->Kill();
+	}
 }

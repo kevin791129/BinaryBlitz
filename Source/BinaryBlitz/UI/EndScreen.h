@@ -5,11 +5,30 @@
 #include "Blueprint/UserWidget.h"
 #include "EndScreen.generated.h"
 
-class UProgressBar;
+class UButton;
+class UTextBlock;
 
 UCLASS(Abstract, HideDropdown)
 class BINARYBLITZ_API UEndScreen : public UUserWidget
 {
 	GENERATED_BODY()
+
+public:
+	void DisplayResult(bool bGoodWin, float Time);
 	
+protected:
+	//~ Begin UUserWidget Interface
+	virtual void NativeOnInitialized() override;
+	//~ End UUserWidget Interface
+
+	UFUNCTION()
+	void OnRestartBtnClicked();
+
+protected:
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* ResultText;
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* ResultText2;
+	UPROPERTY(meta = (BindWidget))
+	UButton* RestartBtn;
 };
