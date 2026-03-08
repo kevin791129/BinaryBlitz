@@ -117,5 +117,7 @@ protected:
 private:
 	float UpdateTimer = 0.0f;
 
+	float SpawnCooldownTimer = 0.0f;
+
 	static AEnemyAIManager* Instance;
 };

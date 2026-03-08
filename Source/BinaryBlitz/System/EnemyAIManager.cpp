@@ -21,7 +21,7 @@ AEnemyAIManager::AEnemyAIManager()
 {
 	PrimaryActorTick.bCanEverTick = true;
 }
-
+UE_DISABLE_OPTIMIZATION
 void AEnemyAIManager::BeginPlay()
 {
 	Super::BeginPlay();
@@ -96,7 +96,8 @@ void AEnemyAIManager::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 
 	UpdateTimer += DeltaSeconds;
-	if (UpdateTimer >= UpdateInterval)
+	SpawnCooldownTimer -= DeltaSeconds;
+	if (UpdateTimer >= UpdateInterval && SpawnCooldownTimer <= 0.0f)
 	{
 		UpdateTimer = 0.0f;
 		UpdateInternal();
@@ -288,7 +289,12 @@ AEnemyAIManager::FSpawnResult AEnemyAIManager::TrySpawnUnit(EUnitType Type, cons
 	if (ABinaryBlitzGameState* GameState = Cast<ABinaryBlitzGameState>(GetWorld()->GetGameState()))
 	{
 		if (GameState->PurchaseUnit(EFaction::Evil, UnitCostMap[Type]))
-			return AEnemyAIManager::FSpawnResult(Cast<AUnitBase>(ABinaryBlitzUnitPool::GetInstance()->AquireActor(EFaction::Evil, Type, Position)));
+		{
+			AUnitBase* Unit = Cast<AUnitBase>(ABinaryBlitzUnitPool::GetInstance()->AquireActor(EFaction::Evil, Type, Position));
+			SpawnCooldownTimer = Unit->GetDefaultStats().SpawnCooldown;
+			return AEnemyAIManager::FSpawnResult(Unit);
+		}
 	}
 	return AEnemyAIManager::FSpawnResult();
 }
+UE_ENABLE_OPTIMIZATION

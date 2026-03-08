@@ -43,7 +43,7 @@ AUnitBase::AUnitBase()
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 }
-UE_DISABLE_OPTIMIZATION
+
 void AUnitBase::BeginPlay()
 {
 	Super::BeginPlay();
@@ -343,4 +343,3 @@ void AUnitBase::OnDeath_BP_Implementation()
 {
 	UE_LOG(LogBinaryBlitz, Log, TEXT("%s destroyed."), *GetName())
 }
-UE_ENABLE_OPTIMIZATION

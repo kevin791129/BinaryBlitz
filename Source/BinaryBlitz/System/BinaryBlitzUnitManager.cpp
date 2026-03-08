@@ -127,6 +127,12 @@ AUnitBase* ABinaryBlitzUnitManager::FindClosestEnemy(AUnitBase* Unit)
 		}
 
 		const float DistSq = FVector::DistSquared(Unit->GetActorLocation(), Candidate->GetActorLocation());
+		const float PerceptionRangeSq = Unit->GetDefaultStats().PerceptionRange * Unit->GetDefaultStats().PerceptionRange;
+
+		if (DistSq > PerceptionRangeSq)
+		{
+			continue;
+		}
 
 		if (DistSq < BestDistSq)
 		{

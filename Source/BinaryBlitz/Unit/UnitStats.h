@@ -32,12 +32,18 @@ public:
 	/** Attack range (cm) */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Unit Stats", meta = (DisplayName = "Attack Range"))
 	float Range;
+	/* Perception range (cm) */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Unit Stats", meta = (DisplayName = "Perception Range"))
+	float PerceptionRange;
 	/** Attack facing dot product (keep around 0.95) */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Unit Stats", meta = (DisplayName = "Attack Facing (Dot)"))
 	float FacingDot;
 	/** Cost to deploy unit */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Unit Stats", meta = (DisplayName = "Cost"))
 	float Cost;
+	/** Spawn cooldown */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Unit Stats", meta = (DisplayName = "Spawn Cooldown"))
+	float SpawnCooldown;
 };
 
 USTRUCT(BlueprintType, meta = (DisplayName = "Enemy AI Factors"))
