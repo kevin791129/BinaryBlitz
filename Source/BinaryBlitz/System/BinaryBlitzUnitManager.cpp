@@ -168,6 +168,11 @@ void ABinaryBlitzUnitManager::UpdateInternal()
 				Target = FindClosestEnemy(Unit);
 				Unit->SetTarget(Target);
 
+				if (!IsValid(Target))
+				{
+					continue;
+				}
+
 				if (AUnitMovementController* UnitMovementController = Cast<AUnitMovementController>(Unit->GetController()))
 				{
 					const float DistSq = FVector::DistSquared2D(Unit->GetActorLocation(), Target->GetActorLocation());

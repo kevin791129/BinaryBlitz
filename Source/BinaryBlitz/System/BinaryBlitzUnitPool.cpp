@@ -5,6 +5,8 @@
 #include "../Unit/UnitStats.h"
 #include "../Unit/UnitBase.h"
 /* Other */
+#include "NavigationSystem.h"
+#include "Components/CapsuleComponent.h"
 #include "../BinaryBlitzGameInstance.h"
 #include "../BinaryBlitz.h"
 
@@ -223,15 +225,62 @@ AActor* ABinaryBlitzUnitPool::SpawnNewPooled(EFaction Faction, EUnitType Type)
 
 	return Actor;
 }
-UE_DISABLE_OPTIMIZATION
+
 void ABinaryBlitzUnitPool::ActivateActor(AActor* Actor, const FVector& Position, const FRotator& Rotation)
 {
+	FVector SpawnPosition = Position;
+		
+	AUnitBase* UnitBase = Cast<AUnitBase>(Actor);
+	if (IsValid(UnitBase))
+	{
+		UCapsuleComponent* Capsule = UnitBase->GetCapsuleComponent();
+		const float CapsuleRadius = Capsule->GetScaledCapsuleRadius() + 20.0f;
+		const float CapsuleHalfHeight = Capsule->GetScaledCapsuleHalfHeight() + 10.0f;
+
+		FCollisionShape CapsuleShape = FCollisionShape::MakeCapsule(CapsuleRadius, CapsuleHalfHeight);
+
+		FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(FindFreeLocationForPooledCharacter), false);
+		QueryParams.AddIgnoredActor(UnitBase);
+
+		auto IsSpotFree = [&](const FVector& TestLocation) 	{
+				return !GetWorld()->OverlapAnyTestByChannel(TestLocation, FQuat::Identity, ECC_Pawn, CapsuleShape, QueryParams);
+			};
+
+		UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
+		FNavLocation NavLocation;
+		if (NavSys->ProjectPointToNavigation(Position, NavLocation, FVector(100.0f)))
+		{
+			if (IsSpotFree(NavLocation.Location)) // First try the exact desired position projected to nav
+			{
+				SpawnPosition = Position;
+			}
+			else // Then try nearby reachable points
+			{
+				UE_LOG(LogBinaryBlitz, Log, TEXT("Getting random point on nav mesh."))
+
+				for (int32 i = 0; i < 10; ++i)
+				{
+					FNavLocation Candidate;
+					if (!NavSys->GetRandomReachablePointInRadius(Position, 5000.0f, Candidate))
+						continue;
+
+					if (IsSpotFree(Candidate.Location))
+					{
+						SpawnPosition = Candidate.Location;
+						break;
+					}
+				}
+			}
+		}
+	}
+
 	Actor->SetActorHiddenInGame(false);
 	Actor->SetActorEnableCollision(true);
 	Actor->SetActorTickEnabled(true);
-	Actor->SetActorLocation(Position + SpawnOffset, true);
+	Actor->SetActorLocation(SpawnPosition + SpawnOffset, true);
 	Actor->SetActorRotation(Rotation);
-	if (AUnitBase* UnitBase = Cast<AUnitBase>(Actor))
+	//if (AUnitBase* UnitBase = Cast<AUnitBase>(Actor))
+	if (IsValid(UnitBase))
 	{
 		UnitBase->OnSpawned();
 	}
@@ -244,4 +293,3 @@ void ABinaryBlitzUnitPool::DeactivateActor(AActor* Actor)
 	Actor->SetActorTickEnabled(false);
 	Actor->SetActorLocation(InactivateLocation);
 }
-UE_ENABLE_OPTIMIZATION

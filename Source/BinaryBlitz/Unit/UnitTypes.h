@@ -18,4 +18,5 @@ enum class EUnitType : uint8
 	Large 		UMETA(DisplayName = "Large"),
 	Flying 		UMETA(DisplayName = "Flying"),
 	Tower 		UMETA(DisplayName = "Tower"),
+	Factory		UMETA(DisplayName = "Factory"),
 };

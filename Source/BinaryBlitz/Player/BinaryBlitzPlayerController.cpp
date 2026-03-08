@@ -55,19 +55,24 @@ void ABinaryBlitzPlayerController::Tick(float DeltaSeconds)
 
 	bValidSpawn = false;
 
-	FHitResult HitResult;
-	if (GetHitResultUnderCursor(ECC_Visibility, false, HitResult))
-	{
-		if (UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld()))
-		{
-			FNavLocation NavLocation;
+	SpawnCooldownTimer -= DeltaSeconds;
 
-			if (NavSys->ProjectPointToNavigation(HitResult.Location, NavLocation, FVector(100.0f)))
+	if (SpawnCooldownTimer <= 0.0f)
+	{
+		FHitResult HitResult;
+		if (GetHitResultUnderCursor(ECC_Visibility, false, HitResult))
+		{
+			if (UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld()))
 			{
-				if (IsOnCorrectSide(FVector2D(NavLocation.Location)))
+				FNavLocation NavLocation;
+
+				if (NavSys->ProjectPointToNavigation(HitResult.Location, NavLocation, FVector(100.0f)))
 				{
-					bValidSpawn = true;
-					SpawnPoint = NavLocation.Location;
+					if (IsOnCorrectSide(FVector2D(NavLocation.Location)))
+					{
+						bValidSpawn = true;
+						SpawnPoint = NavLocation.Location;
+					}
 				}
 			}
 		}
@@ -95,7 +100,7 @@ void ABinaryBlitzPlayerController::OnSpawnUnitAction()
 {
 	if (bValidSpawn && GameScreen)
 	{
-		GameScreen->TrySpawnUnit(SpawnPoint);
+		SpawnCooldownTimer = GameScreen->TrySpawnUnit(SpawnPoint);
 	}
 }
 
@@ -124,6 +129,7 @@ void ABinaryBlitzPlayerController::OnGameStateChanged(EGameState State)
 		if (IsValid(StartScreen))
 		{
 			StartScreen->RemoveFromViewport();
+			StartScreen = nullptr;
 		}
 		if (GameScreenClass)
 		{
@@ -138,6 +144,7 @@ void ABinaryBlitzPlayerController::OnGameStateChanged(EGameState State)
 		if (IsValid(GameScreen))
 		{
 			GameScreen->RemoveFromViewport();
+			GameScreen = nullptr;
 		}
 		if (EndScreenClass)
 		{

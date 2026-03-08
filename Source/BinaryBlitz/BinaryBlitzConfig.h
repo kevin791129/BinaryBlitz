@@ -36,14 +36,6 @@ public:
     UPROPERTY(Config, EditAnywhere, Category = "Balancing")
     int EvilStartingCash = 1000;
 
-    /* Coins per second */
-    UPROPERTY(Config, EditAnywhere, Category = "Balancing")
-    int GoodPassiveIncome = 10.0f;
-
-    /* Coins per second */
-    UPROPERTY(Config, EditAnywhere, Category = "Balancing")
-    int EvilPassiveIncome = 10.0f;
-
     /* Percentage of unit cost gained on death */
     UPROPERTY(Config, EditAnywhere, Category = "Balancing")
     float CoinDropMultiplier = 0.5f;

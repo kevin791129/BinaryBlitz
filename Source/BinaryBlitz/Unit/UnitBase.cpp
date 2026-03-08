@@ -12,6 +12,7 @@
 #include "../System/BinaryBlitzUnitManager.h"
 #include "../BinaryBlitzGameState.h"
 /* Other */
+#include "Navigation/PathFollowingComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "../BinaryBlitzConfig.h"
 #include "../BinaryBlitz.h"
@@ -49,15 +50,6 @@ void AUnitBase::BeginPlay()
 	Super::BeginPlay();
 
 	HP = GetDefaultStats().MaxHP;
-
-	if (const UBinaryBlitzConfig* Config = GetDefault<UBinaryBlitzConfig>())
-	{
-		if (const FUnitTableRow* TableRow = TableRowHandle.GetRow<FUnitTableRow>(nullptr))
-		{
-			PassiveIncome = TableRow->Type == EUnitType::Base ?
-				(Faction == EFaction::Good ? Config->GoodPassiveIncome : Config->EvilPassiveIncome) : 0;
-		}
-	}
 }
 
 void AUnitBase::Tick(float DeltaSeconds)
@@ -197,7 +189,7 @@ float AUnitBase::GetHealthPercent() const
 
 void AUnitBase::StartPassiveIncome()
 {
-	if (PassiveIncome > 0)
+	if (GetDefaultStats().PassiveIncome > 0)
 	{
 		GetWorld()->GetTimerManager().SetTimer(PassiveIncomeHandle, this, &AUnitBase::OnPassiveIncome, 1.0f, true);
 	}
@@ -223,11 +215,9 @@ void AUnitBase::UpdateCombat(float DeltaSeconds)
 
 	if (IsValid(CurrentTarget) && IsTargetInRange())
 	{
-		
-
 		if (IsValid(UnitMovementController))
 		{
-			UnitMovementController->StopUnitMovement();
+			//UnitMovementController->StopUnitMovement();
 			UnitMovementController->SetCombatFocus(CurrentTarget);
 		}
 
@@ -246,7 +236,7 @@ void AUnitBase::UpdateCombat(float DeltaSeconds)
 		if (IsValid(UnitMovementController))
 		{
 			UnitMovementController->ClearCombatFocus();
-			UnitState = EUnitState::Moving;
+			UnitState = UnitMovementController->GetMoveStatus() == EPathFollowingStatus::Type::Moving ? EUnitState::Moving : EUnitState::Idle;
 		}
 		else
 		{
@@ -344,7 +334,7 @@ void AUnitBase::OnPassiveIncome()
 		return;
 
 	if (ABinaryBlitzGameState* GameState = Cast<ABinaryBlitzGameState>(GetWorld()->GetGameState()))
-		GameState->CollectMoney(Faction, PassiveIncome);
+		GameState->CollectMoney(Faction, GetDefaultStats().PassiveIncome);
 }
 
 void AUnitBase::OnAttack_BP_Implementation()

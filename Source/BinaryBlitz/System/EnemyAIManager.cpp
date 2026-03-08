@@ -20,7 +20,7 @@ AEnemyAIManager::AEnemyAIManager()
 {
 	PrimaryActorTick.bCanEverTick = true;
 }
-UE_DISABLE_OPTIMIZATION
+
 void AEnemyAIManager::BeginPlay()
 {
 	Super::BeginPlay();
@@ -304,7 +304,7 @@ AEnemyAIManager::FSpawnResult AEnemyAIManager::TrySpawnUnit(EUnitType Type, cons
 	}
 	return AEnemyAIManager::FSpawnResult();
 }
-UE_ENABLE_OPTIMIZATION
+
 void AEnemyAIManager::OnGameStateChanged(EGameState State)
 {
 	if (State == EGameState::InProgress)

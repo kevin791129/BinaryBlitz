@@ -21,6 +21,7 @@ void UGameScreen::NativeOnInitialized()
 	LargeBtn->OnClicked.AddDynamic(this, &UGameScreen::OnLargeUnitBtnClicked);
 	FlyingBtn->OnClicked.AddDynamic(this, &UGameScreen::OnFlyingUnitBtnClicked);
 	TowerBtn->OnClicked.AddDynamic(this, &UGameScreen::OnTowerUnitBtnClicked);
+	FactoryBtn->OnClicked.AddDynamic(this, &UGameScreen::OnFactoryUnitBtnClicked);
 
 	UBinaryBlitzGameInstance* GameInstance = Cast<UBinaryBlitzGameInstance>(GetGameInstance());
 	if (!GameInstance || !GameInstance->GetUnitDataTable())
@@ -35,6 +36,8 @@ void UGameScreen::NativeOnInitialized()
 
 			int TempCost = static_cast<int>(TempUnitTableRow->Stats.Cost);
 			UnitCostMap.Add(TempUnitTableRow->Type, TempCost);
+
+			UnitCooldownMap.Add(TempUnitTableRow->Type, TempUnitTableRow->Stats.SpawnCooldown);
 
 			switch (TempUnitTableRow->Type)
 			{
@@ -57,6 +60,10 @@ void UGameScreen::NativeOnInitialized()
 			case EUnitType::Tower:
 				TowerText->SetText(FText::FromString(TempUnitTableRow->Name));
 				TowerCost->SetText(FText::FromString(FString::Printf(TEXT("$%d"), TempCost)));
+				break;
+			case EUnitType::Factory:
+				FactoryText->SetText(FText::FromString(TempUnitTableRow->Name));
+				FactoryCost->SetText(FText::FromString(FString::Printf(TEXT("$%d"), TempCost)));
 				break;
 			}
 		}
@@ -82,16 +89,17 @@ void UGameScreen::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 		UpdateButtons(GameState, EUnitType::Large);
 		UpdateButtons(GameState, EUnitType::Flying);
 		UpdateButtons(GameState, EUnitType::Tower);
+		UpdateButtons(GameState, EUnitType::Factory);
 
 		const int CurrentMoney = GameState->GetMoney(EFaction::Good);
 		CoinCount->SetText(FText::FromString(FString::Printf(TEXT("Cash: $%d"), CurrentMoney)));
 	}
 }
 
-void UGameScreen::TrySpawnUnit(const FVector& Position)
+float UGameScreen::TrySpawnUnit(const FVector& Position)
 {
 	if (!GetWorld())
-		return;
+		return UnitCooldownMap[SpawnType];
 
 	if (ABinaryBlitzGameState* GameState = Cast<ABinaryBlitzGameState>(GetWorld()->GetGameState()))
 	{
@@ -100,6 +108,8 @@ void UGameScreen::TrySpawnUnit(const FVector& Position)
 			ABinaryBlitzUnitPool::GetInstance()->AquireActor(EFaction::Good, SpawnType, Position);		
 		}
 	}
+
+	return UnitCooldownMap[SpawnType];
 }
 
 void UGameScreen::OnSmallUnitBtnClicked()
@@ -110,6 +120,7 @@ void UGameScreen::OnSmallUnitBtnClicked()
 	LargeBtn->SetBackgroundColor(DeselectColor);
 	FlyingBtn->SetBackgroundColor(DeselectColor);
 	TowerBtn->SetBackgroundColor(DeselectColor);
+	FactoryBtn->SetBackgroundColor(DeselectColor);
 }
 
 void UGameScreen::OnMediumUnitBtnClicked()
@@ -120,6 +131,7 @@ void UGameScreen::OnMediumUnitBtnClicked()
 	LargeBtn->SetBackgroundColor(DeselectColor);
 	FlyingBtn->SetBackgroundColor(DeselectColor);
 	TowerBtn->SetBackgroundColor(DeselectColor);
+	FactoryBtn->SetBackgroundColor(DeselectColor);
 }
 
 void UGameScreen::OnLargeUnitBtnClicked()
@@ -130,6 +142,7 @@ void UGameScreen::OnLargeUnitBtnClicked()
 	LargeBtn->SetBackgroundColor(SelectColor);
 	FlyingBtn->SetBackgroundColor(DeselectColor);
 	TowerBtn->SetBackgroundColor(DeselectColor);
+	FactoryBtn->SetBackgroundColor(DeselectColor);
 }
 
 void UGameScreen::OnFlyingUnitBtnClicked()
@@ -140,6 +153,7 @@ void UGameScreen::OnFlyingUnitBtnClicked()
 	LargeBtn->SetBackgroundColor(DeselectColor);
 	FlyingBtn->SetBackgroundColor(SelectColor);
 	TowerBtn->SetBackgroundColor(DeselectColor);
+	FactoryBtn->SetBackgroundColor(DeselectColor);
 }
 
 void UGameScreen::OnTowerUnitBtnClicked()
@@ -150,6 +164,18 @@ void UGameScreen::OnTowerUnitBtnClicked()
 	LargeBtn->SetBackgroundColor(DeselectColor);
 	FlyingBtn->SetBackgroundColor(DeselectColor);
 	TowerBtn->SetBackgroundColor(SelectColor);
+	FactoryBtn->SetBackgroundColor(DeselectColor);
+}
+
+void UGameScreen::OnFactoryUnitBtnClicked()
+{
+	SpawnType = EUnitType::Factory;
+	SmallBtn->SetBackgroundColor(DeselectColor);
+	MediumBtn->SetBackgroundColor(DeselectColor);
+	LargeBtn->SetBackgroundColor(DeselectColor);
+	FlyingBtn->SetBackgroundColor(DeselectColor);
+	TowerBtn->SetBackgroundColor(DeselectColor);
+	FactoryBtn->SetBackgroundColor(SelectColor);
 }
 
 void UGameScreen::ToggleUnitButton(EUnitType Type, bool bEnable)
@@ -180,6 +206,11 @@ void UGameScreen::ToggleUnitButton(EUnitType Type, bool bEnable)
 		TowerBtn->SetIsEnabled(bEnable);
 		TowerText->SetColorAndOpacity(bEnable ? EnableColor : DisableColor);
 		TowerCost->SetColorAndOpacity(bEnable ? EnableColor : DisableColor);
+		break;
+	case EUnitType::Factory:
+		FactoryBtn->SetIsEnabled(bEnable);
+		FactoryText->SetColorAndOpacity(bEnable ? EnableColor : DisableColor);
+		FactoryCost->SetColorAndOpacity(bEnable ? EnableColor : DisableColor);
 		break;
 	}
 }

@@ -73,5 +73,7 @@ protected:
 private:
 	bool bValidSpawn = false;
 
+	float SpawnCooldownTimer = 0.0f;
+
 	FVector SpawnPoint = FVector::ZeroVector;
 };

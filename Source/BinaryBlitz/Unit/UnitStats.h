@@ -44,6 +44,9 @@ public:
 	/** Spawn cooldown */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Unit Stats", meta = (DisplayName = "Spawn Cooldown"))
 	float SpawnCooldown;
+	/** Coin generation per second */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Unit Stats", meta = (DisplayName = "Passive Income"))
+	int PassiveIncome;
 };
 
 USTRUCT(BlueprintType, meta = (DisplayName = "Enemy AI Factors"))

@@ -19,7 +19,7 @@ class BINARYBLITZ_API UGameScreen : public UUserWidget
 	
 public:
 	UFUNCTION(BlueprintCallable)
-	void TrySpawnUnit(const FVector& Position);
+	float TrySpawnUnit(const FVector& Position);
 
 public:
 	UPROPERTY(BlueprintAssignable)
@@ -41,6 +41,8 @@ protected:
 	void OnFlyingUnitBtnClicked();
 	UFUNCTION()
 	void OnTowerUnitBtnClicked();
+	UFUNCTION()
+	void OnFactoryUnitBtnClicked();
 
 	void ToggleUnitButton(EUnitType Type, bool bEnable);
 
@@ -85,6 +87,14 @@ protected:
 	UTextBlock* TowerText;
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* TowerCost;
+	UPROPERTY(meta = (BindWidget))
+	UButton* FactoryBtn;
+	UPROPERTY(meta = (BindWidget))
+	UImage* FactoryIcon;
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* FactoryText;
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* FactoryCost;
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* CoinCount;
@@ -101,6 +111,8 @@ protected:
 
 	UPROPERTY(Transient)
 	TMap<EUnitType, int> UnitCostMap;
+	UPROPERTY(Transient)
+	TMap<EUnitType, float> UnitCooldownMap;
 
 	UPROPERTY(Transient)
 	EUnitType SpawnType;
