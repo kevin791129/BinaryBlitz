@@ -7,6 +7,7 @@
 
 class UButton;
 class UTextBlock;
+class UBorder;
 
 UCLASS(Abstract, HideDropdown)
 class BINARYBLITZ_API UEndScreen : public UUserWidget
@@ -26,9 +27,14 @@ protected:
 
 protected:
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* ResultText;
+	UBorder* VictoryScreen;
+
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* ResultText2;
+	UBorder* LoseScreen;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* ResultText;
+
 	UPROPERTY(meta = (BindWidget))
 	UButton* RestartBtn;
 };

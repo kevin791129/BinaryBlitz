@@ -9,25 +9,33 @@
 class UButton;
 class UTextBlock;
 class UImage;
+class UProgressBar;
+class AUnitBase;
 
 UCLASS(Abstract, HideDropdown)
 class BINARYBLITZ_API UGameScreen : public UUserWidget
 {
 	GENERATED_BODY()
 
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSpawnTypeChanged, EUnitType, Type);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSpawnTypeChanged, EUnitType, Type, int, Cost);
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnSpawnCooldown);
 	
 public:
 	UFUNCTION(BlueprintCallable)
-	float TrySpawnUnit(const FVector& Position);
+	bool TrySpawnUnit(const FVector& Position);
 
 public:
 	UPROPERTY(BlueprintAssignable)
 	FOnSpawnTypeChanged OnSpawnTypeChanged;
 
+	UPROPERTY(BlueprintAssignable)
+	FOnSpawnCooldown OnSpawnCooldown;
+
 protected:
 	//~ Begin UUserWidget Interface
 	virtual void NativeOnInitialized() override;
+	virtual void NativeConstruct() override;
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 	//~ End UUserWidget Interface
 
@@ -46,6 +54,8 @@ protected:
 
 	void ToggleUnitButton(EUnitType Type, bool bEnable);
 
+	void ToggleCooldownTints(bool bEnable);
+
 protected:
 	UPROPERTY(meta = (BindWidget))
 	UButton* SmallBtn;
@@ -56,6 +66,8 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* SmallCost;
 	UPROPERTY(meta = (BindWidget))
+	UImage* SmallCooldownTint;
+	UPROPERTY(meta = (BindWidget))
 	UButton* MediumBtn;
 	UPROPERTY(meta = (BindWidget))
 	UImage* MediumIcon;
@@ -63,6 +75,8 @@ protected:
 	UTextBlock* MediumText;
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* MediumCost;
+	UPROPERTY(meta = (BindWidget))
+	UImage* MediumCooldownTint;
 	UPROPERTY(meta = (BindWidget))
 	UButton* LargeBtn;
 	UPROPERTY(meta = (BindWidget))
@@ -72,6 +86,8 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* LargeCost;
 	UPROPERTY(meta = (BindWidget))
+	UImage* LargeCooldownTint;
+	UPROPERTY(meta = (BindWidget))
 	UButton* FlyingBtn;
 	UPROPERTY(meta = (BindWidget))
 	UImage* FlyingIcon;
@@ -79,6 +95,8 @@ protected:
 	UTextBlock* FlyingText;
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* FlyingCost;
+	UPROPERTY(meta = (BindWidget))
+	UImage* FlyingCooldownTint;
 	UPROPERTY(meta = (BindWidget))
 	UButton* TowerBtn;
 	UPROPERTY(meta = (BindWidget))
@@ -88,6 +106,8 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* TowerCost;
 	UPROPERTY(meta = (BindWidget))
+	UImage* TowerCooldownTint;
+	UPROPERTY(meta = (BindWidget))
 	UButton* FactoryBtn;
 	UPROPERTY(meta = (BindWidget))
 	UImage* FactoryIcon;
@@ -95,9 +115,16 @@ protected:
 	UTextBlock* FactoryText;
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* FactoryCost;
+	UPROPERTY(meta = (BindWidget))
+	UImage* FactoryCooldownTint;
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* CoinCount;
+
+	UPROPERTY(meta = (BindWidget))
+	UProgressBar* GoodHP;
+	UPROPERTY(meta = (BindWidget))
+	UProgressBar* EvilHP;
 
 	UPROPERTY(EditAnywhere, Category = Style)
 	FLinearColor EnableColor;
@@ -109,6 +136,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = Style)
 	FLinearColor DeselectColor;
 
+	UPROPERTY(EditAnywhere, Category = Style)
+	UMaterialInterface* CooldownTintMat;
+
 	UPROPERTY(Transient)
 	TMap<EUnitType, int> UnitCostMap;
 	UPROPERTY(Transient)
@@ -116,4 +146,17 @@ protected:
 
 	UPROPERTY(Transient)
 	EUnitType SpawnType;
+
+	UPROPERTY(Transient)
+	UMaterialInstanceDynamic* CooldownTintDynamic;
+
+	UPROPERTY(Transient)
+	AUnitBase* GoodBase;
+	UPROPERTY(Transient)
+	AUnitBase* EvilBase;
+
+private:
+	bool bCooldown = false;
+	float CooldownTimer = 0.0f;
+	float CooldownTargetTime = 0.0f;
 };

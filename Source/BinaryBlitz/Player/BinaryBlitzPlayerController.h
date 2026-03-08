@@ -40,6 +40,12 @@ protected:
 	UFUNCTION()
 	void OnGameStateChanged(EGameState State);
 
+	UFUNCTION()
+	void OnSpawnTypeChanged(EUnitType Type, int Cost);
+
+	UFUNCTION()
+	void OnSpawnCooldown();
+
 protected:
 	/** Default mapping context */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Input, meta = (DisplayName = "Default Mapping Context"))
@@ -73,7 +79,11 @@ protected:
 private:
 	bool bValidSpawn = false;
 
-	float SpawnCooldownTimer = 0.0f;
+	EUnitType SpawnType = EUnitType::Small;
+
+	int UnitCost = 50;
+
+	bool bSpawnCooldown = false;
 
 	FVector SpawnPoint = FVector::ZeroVector;
 };

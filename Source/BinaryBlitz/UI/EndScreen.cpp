@@ -4,6 +4,7 @@
 /* Components */
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
+#include "Components/Border.h"
 /* Other */
 #include "Kismet/GameplayStatics.h"
 #include "Misc/Timespan.h"
@@ -23,15 +24,17 @@ void UEndScreen::DisplayResult(bool bGoodWin, float Time)
 
     if (bGoodWin)
     {
-        ResultText->SetText(FText::FromString("Good Victory"));
         const FString DisplayStr = FString::Printf(TEXT("You destroyed the evil base in %s."), *TimeStr);
-        ResultText2->SetText(FText::FromString(DisplayStr));
+        ResultText->SetText(FText::FromString(DisplayStr));
+        VictoryScreen->SetVisibility(ESlateVisibility::Visible);
+        LoseScreen->SetVisibility(ESlateVisibility::Hidden);
     }
     else
     {
-        ResultText->SetText(FText::FromString("Evil Victory"));
         const FString DisplayStr = FString::Printf(TEXT("You held the evil assult for %s."), *TimeStr);
-        ResultText2->SetText(FText::FromString(DisplayStr));
+        ResultText->SetText(FText::FromString(DisplayStr));
+        VictoryScreen->SetVisibility(ESlateVisibility::Hidden);
+        LoseScreen->SetVisibility(ESlateVisibility::Visible);
     }
 }
 

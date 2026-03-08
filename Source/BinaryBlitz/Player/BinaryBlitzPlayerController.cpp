@@ -9,6 +9,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 /* Other */
+#include "../BinaryBlitzGameState.h"
 #include "NavigationSystem.h"
 #include "../BinaryBlitz.h"
 
@@ -55,9 +56,13 @@ void ABinaryBlitzPlayerController::Tick(float DeltaSeconds)
 
 	bValidSpawn = false;
 
-	SpawnCooldownTimer -= DeltaSeconds;
+	bool bEnoughMoney = false;
+	if (ABinaryBlitzGameState* GameState = Cast<ABinaryBlitzGameState>(GetWorld()->GetGameState()))
+	{
+		bEnoughMoney = GameState->GetMoney(EFaction::Good) >= UnitCost;
+	}
 
-	if (SpawnCooldownTimer <= 0.0f)
+	if (!bSpawnCooldown && bEnoughMoney)
 	{
 		FHitResult HitResult;
 		if (GetHitResultUnderCursor(ECC_Visibility, false, HitResult))
@@ -100,7 +105,7 @@ void ABinaryBlitzPlayerController::OnSpawnUnitAction()
 {
 	if (bValidSpawn && GameScreen)
 	{
-		SpawnCooldownTimer = GameScreen->TrySpawnUnit(SpawnPoint);
+		bSpawnCooldown = GameScreen->TrySpawnUnit(SpawnPoint);
 	}
 }
 
@@ -135,7 +140,11 @@ void ABinaryBlitzPlayerController::OnGameStateChanged(EGameState State)
 		{
 			GameScreen = CreateWidget<UGameScreen>(this, GameScreenClass, FName("GameScreen"));
 			if (GameScreen)
+			{
+				GameScreen->OnSpawnCooldown.AddDynamic(this, &ABinaryBlitzPlayerController::OnSpawnCooldown);
+				GameScreen->OnSpawnTypeChanged.AddDynamic(this, &ABinaryBlitzPlayerController::OnSpawnTypeChanged);
 				GameScreen->AddToViewport();
+			}
 		}
 	}
 	else if (State == EGameState::Over)
@@ -159,4 +168,15 @@ void ABinaryBlitzPlayerController::OnGameStateChanged(EGameState State)
 			}
 		}
 	}
+}
+
+void ABinaryBlitzPlayerController::OnSpawnTypeChanged(EUnitType Type, int Cost)
+{
+	SpawnType = Type;
+	UnitCost = Cost;
+}
+
+void ABinaryBlitzPlayerController::OnSpawnCooldown()
+{
+	bSpawnCooldown = false;
 }
