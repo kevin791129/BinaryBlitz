@@ -11,6 +11,7 @@
 #include "../System/BinaryBlitzUnitPool.h"
 #include "../System/BinaryBlitzUnitManager.h"
 #include "../BinaryBlitzGameState.h"
+#include "NavigationSystem.h"
 /* Other */
 #include "Navigation/PathFollowingComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -64,12 +65,7 @@ void AUnitBase::Tick(float DeltaSeconds)
 	// Death plane.
 	if (GetActorLocation().Z <= -1200.0f)
 	{
-		GetCharacterMovement()->StopMovementImmediately();
-		GetCharacterMovement()->Velocity = FVector::ZeroVector;
-		GetCharacterMovement()->DisableMovement();
-
-		ABinaryBlitzUnitPool::GetInstance()->ReleaseActor(this);
-		ABinaryBlitzUnitManager::GetInstance()->UnregisterUnit(this);
+		Kill(true);
 	}
 
 	UpdateHealthBarRotation();
@@ -100,6 +96,7 @@ void AUnitBase::InitStats(const EFaction InFaction, const UDataTable* Table, con
 void AUnitBase::OnSpawned()
 {
 	HP = GetDefaultStats().MaxHP;
+	IdleFrameCount = 0;
 	UnitState = EUnitState::Idle;
 	ABinaryBlitzUnitManager::GetInstance()->RegisterUnit(this);
 
@@ -195,7 +192,7 @@ void AUnitBase::StartPassiveIncome()
 	}
 }
 
-void AUnitBase::Kill()
+void AUnitBase::Kill(bool bReleaseToPool)
 {
 	UnitState = EUnitState::Dead;
 
@@ -205,6 +202,12 @@ void AUnitBase::Kill()
 	GetCharacterMovement()->StopMovementImmediately();
 	GetCharacterMovement()->Velocity = FVector::ZeroVector;
 	GetCharacterMovement()->DisableMovement();
+
+	if (bReleaseToPool)
+	{
+		ABinaryBlitzUnitPool::GetInstance()->ReleaseActor(this);
+		ABinaryBlitzUnitManager::GetInstance()->UnregisterUnit(this);
+	}
 }
 
 void AUnitBase::UpdateCombat(float DeltaSeconds)
@@ -237,6 +240,26 @@ void AUnitBase::UpdateCombat(float DeltaSeconds)
 		{
 			UnitMovementController->ClearCombatFocus();
 			UnitState = UnitMovementController->GetMoveStatus() == EPathFollowingStatus::Type::Moving ? EUnitState::Moving : EUnitState::Idle;
+
+			// No movable unit should be idle, because there should always be a target (enemy base).
+			if (UnitState == EUnitState::Idle && GetDefaultStats().Speed > 0.0f)
+			{
+				UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
+				FNavLocation NavLocation;
+				const FVector QueryExtent(GetCapsuleComponent()->GetScaledCapsuleRadius(), GetCapsuleComponent()->GetScaledCapsuleRadius(), GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
+				if (!NavSys->ProjectPointToNavigation(GetActorLocation(), NavLocation, FVector(100.0f)))
+				{
+					IdleFrameCount++;
+					if (IdleFrameCount > 100)
+					{
+						Kill(true);
+					}
+				}
+				else
+				{
+					IdleFrameCount = 0;
+				}
+			}
 		}
 		else
 		{

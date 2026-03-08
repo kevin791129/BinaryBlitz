@@ -256,12 +256,12 @@ void ABinaryBlitzUnitPool::ActivateActor(AActor* Actor, const FVector& Position,
 			}
 			else // Then try nearby reachable points
 			{
-				UE_LOG(LogBinaryBlitz, Log, TEXT("Getting random point on nav mesh."))
+				UE_LOG(LogBinaryBlitz, Log, TEXT("Trying to spawn at random point on nav mesh."))
 
 				for (int32 i = 0; i < 10; ++i)
 				{
 					FNavLocation Candidate;
-					if (!NavSys->GetRandomReachablePointInRadius(Position, 5000.0f, Candidate))
+					if (!NavSys->GetRandomReachablePointInRadius(Position, 10000.0f, Candidate))
 						continue;
 
 					if (IsSpotFree(Candidate.Location))
@@ -279,7 +279,6 @@ void ABinaryBlitzUnitPool::ActivateActor(AActor* Actor, const FVector& Position,
 	Actor->SetActorTickEnabled(true);
 	Actor->SetActorLocation(SpawnPosition + SpawnOffset, true);
 	Actor->SetActorRotation(Rotation);
-	//if (AUnitBase* UnitBase = Cast<AUnitBase>(Actor))
 	if (IsValid(UnitBase))
 	{
 		UnitBase->OnSpawned();

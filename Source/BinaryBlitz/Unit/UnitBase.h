@@ -56,8 +56,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void StartPassiveIncome();
 
-	/* Mostly used on game over */
-	void Kill();
+	/**
+	 * Mostly used on game over in which the actor should not be released.
+	 * Or when the unit falls to the death plane or stuck off the nav mesh, then it should be released.
+	 */
+	void Kill(bool bReleaseToPool = false);
 
 protected:
 	//~ Begin AActor Interface
@@ -104,6 +107,8 @@ protected:
 	/** Current attack target */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = State, meta = (DisplayName = "Current Target"))
 	AUnitBase* CurrentTarget = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = State, meta = (DisplayName = "Idle Counter"))
+	int IdleFrameCount = 0;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UWidgetComponent* HealthBarComponent;
